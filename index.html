@@ -3,130 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SVSV PhotoShop Editor</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>SVSV.AI | Pro Image Editor</title>
+    <style>
+        /* --- GLOBAL PREMIUM STYLES --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #000000; color: #ffffff; overflow-x: hidden; }
+        
+        /* --- NAVBAR --- */
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 1px solid #222; }
+        .logo { font-size: 24px; font-weight: 900; letter-spacing: 1px; }
+        .nav-links { display: flex; gap: 30px; font-size: 14px; font-weight: 600; color: #aaa; }
+        .nav-links span:hover { color: #fff; cursor: pointer; }
+        
+        /* --- HERO LANDING PAGE --- */
+        #landing-page { height: calc(100vh - 70px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 20px; }
+        h1 { font-size: 5rem; font-weight: 900; line-height: 1.1; text-transform: uppercase; margin-bottom: 20px; }
+        .gradient-text { background: linear-gradient(90deg, #7b61ff, #00d2ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { max-width: 600px; font-size: 18px; color: #aaa; margin-bottom: 40px; line-height: 1.6; }
+        .btn-primary { background: #ffffff; color: #000; padding: 15px 40px; font-size: 18px; font-weight: 800; border: none; border-radius: 30px; cursor: pointer; transition: transform 0.2s, background 0.2s; }
+        .btn-primary:hover { background: #ddd; transform: scale(1.05); }
+
+        /* --- PRO EDITOR WORKSPACE (HIDDEN INITIALLY) --- */
+        #editor-workspace { display: none; height: calc(100vh - 70px); flex-direction: row; }
+        
+        /* LEFT TOOLBAR */
+        .toolbar { width: 60px; background: #0f0f0f; border-right: 1px solid #222; display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 20px; }
+        .tool-icon { width: 30px; height: 30px; background: #222; border-radius: 5px; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold;}
+        .tool-icon:hover, .tool-icon.active { background: #7b61ff; }
+
+        /* CENTER CANVAS */
+        .canvas-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1a1a1a; padding: 20px; position: relative; }
+        .upload-box { border: 2px dashed #444; padding: 40px; border-radius: 10px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .upload-box:hover { border-color: #7b61ff; background: #222; }
+        #preview-img { max-width: 100%; max-height: 70vh; object-fit: contain; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+        /* RIGHT PROPERTIES PANEL */
+        .properties-panel { width: 300px; background: #0f0f0f; border-left: 1px solid #222; padding: 20px; overflow-y: auto; }
+        .panel-title { font-size: 14px; font-weight: 800; text-transform: uppercase; color: #888; margin-bottom: 20px; letter-spacing: 1px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        
+        .filter-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .filter-btn { flex: 1 1 45%; background: #222; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600; }
+        .filter-btn.active { background: #7b61ff; border-color: #7b61ff; }
+        
+        .slider-container { margin-bottom: 20px; }
+        .slider-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: #ccc; }
+        input[type=range] { width: 100%; accent-color: #7b61ff; }
+
+        .action-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 30px; }
+        .btn-secondary { padding: 12px; background: transparent; border: 1px solid #444; color: #fff; border-radius: 5px; cursor: pointer; font-weight: 600; }
+        .btn-secondary:hover { background: #222; }
+        .btn-export { background: #7b61ff; border: none; }
+        .btn-export:hover { background: #6046e6; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🖼️ SVSV PhotoShop Editor</h1>
-            <p>Professional Photo Editing Tools - Fast, Free & Browser-Based</p>
-        </header>
 
-        <div class="main-content">
-            <aside class="sidebar">
-                <div class="tools-panel">
-                    <h2>Editing Tools</h2>
-                    
-                    <div class="tool-group">
-                        <h3>Basic Adjustments</h3>
-                        <button class="tool-btn" onclick="setTool('brightness')">
-                            <span class="icon">☀️</span> Brightness
-                        </button>
-                        <button class="tool-btn" onclick="setTool('contrast')">
-                            <span class="icon">◐</span> Contrast
-                        </button>
-                        <button class="tool-btn" onclick="setTool('saturation')">
-                            <span class="icon">🎨</span> Saturation
-                        </button>
-                        <button class="tool-btn" onclick="setTool('hue')">
-                            <span class="icon">🌈</span> Hue
-                        </button>
-                        <button class="tool-btn" onclick="setTool('opacity')">
-                            <span class="icon">👻</span> Opacity
-                        </button>
-                    </div>
-
-                    <div class="tool-group">
-                        <h3>Color Adjustments</h3>
-                        <button class="tool-btn" onclick="setTool('grayscale')">
-                            <span class="icon">⚫</span> Grayscale
-                        </button>
-                        <button class="tool-btn" onclick="setTool('sepia')">
-                            <span class="icon">🟫</span> Sepia
-                        </button>
-                        <button class="tool-btn" onclick="setTool('invert')">
-                            <span class="icon">⬜</span> Invert
-                        </button>
-                        <button class="tool-btn" onclick="setTool('blur')">
-                            <span class="icon">💨</span> Blur
-                        </button>
-                    </div>
-
-                    <div class="tool-group">
-                        <h3>Transform Tools</h3>
-                        <button class="tool-btn" onclick="setTool('rotate')">
-                            <span class="icon">🔄</span> Rotate 90°
-                        </button>
-                        <button class="tool-btn" onclick="setTool('flip-h')">
-                            <span class="icon">↔️</span> Flip H
-                        </button>
-                        <button class="tool-btn" onclick="setTool('flip-v')">
-                            <span class="icon">↕️</span> Flip V
-                        </button>
-                        <button class="tool-btn" onclick="setTool('crop')">
-                            <span class="icon">✂️</span> Crop
-                        </button>
-                    </div>
-
-                    <div class="tool-group">
-                        <h3>Effect Tools</h3>
-                        <button class="tool-btn" onclick="setTool('sharpen')">
-                            <span class="icon">🔍</span> Sharpen
-                        </button>
-                        <button class="tool-btn" onclick="setTool('emboss')">
-                            <span class="icon">▲</span> Emboss
-                        </button>
-                        <button class="tool-btn" onclick="setTool('edge-detect')">
-                            <span class="icon">📍</span> Edge Detect
-                        </button>
-                        <button class="tool-btn" onclick="setTool('pixelate')">
-                            <span class="icon">⬜⬜</span> Pixelate
-                        </button>
-                    </div>
-
-                    <div class="tool-group">
-                        <h3>Filter Effects</h3>
-                        <button class="tool-btn" onclick="setTool('vintage')">
-                            <span class="icon">📷</span> Vintage
-                        </button>
-                        <button class="tool-btn" onclick="setTool('warm')">
-                            <span class="icon">🔥</span> Warm
-                        </button>
-                        <button class="tool-btn" onclick="setTool('cool')">
-                            <span class="icon">❄️</span> Cool
-                        </button>
-                    </div>
-                </div>
-            </aside>
-
-            <main class="editor-area">
-                <div class="canvas-container">
-                    <canvas id="canvas"></canvas>
-                    <div class="placeholder" id="placeholder">
-                        <p>📤 Upload an image to start editing</p>
-                    </div>
-                </div>
-
-                <div class="control-panel">
-                    <div class="slider-group" id="sliderGroup" style="display: none;">
-                        <label id="sliderLabel">Value:</label>
-                        <input type="range" id="slider" min="0" max="200" value="100">
-                        <span id="sliderValue">100</span>
-                    </div>
-                    <div class="button-group">
-                        <button class="action-btn primary" onclick="uploadImage()">📁 Upload Image</button>
-                        <button class="action-btn" onclick="downloadImage()">💾 Download</button>
-                        <button class="action-btn" onclick="resetImage()">🔄 Reset</button>
-                        <button class="action-btn" onclick="undoEdit()">↶ Undo</button>
-                        <button class="action-btn" onclick="redoEdit()">↷ Redo</button>
-                    </div>
-                </div>
-            </main>
+    <!-- NAVBAR -->
+    <nav>
+        <div class="logo">SVSV.AI</div>
+        <div class="nav-links">
+            <span>Create</span>
+            <span>Industry</span>
+            <span>Learn</span>
+            <span>Pricing</span>
         </div>
-    </div>
+    </nav>
 
-    <input type="file" id="imageInput" accept="image/*" style="display: none;">
-    <script src="script.js"></script>
+    <!-- HERO LANDING PAGE -->
+    <section id="landing-page">
+        <h1 class="gradient-text">AI IMAGE EDITOR</h1>
+        <h1>REAL CREATIVE CONTROL</h1>
+        <p class="subtitle">Edit images with precision using SVSV. Refine details, adjust lighting, and enhance quality without starting over. Iterate faster and get professional results.</p>
+        <button class="btn-primary" id="start-editing-btn">Launch Editor Studio</button>
+    </section>
+
+    <!-- PRO EDITOR WORKSPACE -->
+    <section id="editor-workspace">
+        
+        <!-- Toolbar (Left) -->
+        <div class="toolbar">
+            <div class="tool-icon active" title="Move">M</div>
+            <div class="tool-icon" title="Crop">C</div>
+            <div class="tool-icon" title="Brush">B</div>
+            <div class="tool-icon" title="Text">T</div>
+        </div>
+
+        <!-- Canvas (Center) -->
+        <div class="canvas-area">
+            <div class="upload-box" id="upload-box">
+                <h3>Click to Upload Image</h3>
+                <p style="color: #666; margin-top: 10px; font-size: 14px;">Drag & drop or browse</p>
+                <input type="file" id="file-input" accept="image/*" hidden>
+            </div>
+            <img src="" id="preview-img" alt="Workspace">
+        </div>
+
+        <!-- Properties (Right) -->
+        <div class="properties-panel">
+            <div class="panel-title">Adjustments</div>
+            
+            <div class="filter-group">
+                <button class="filter-btn active" id="brightness">Brightness</button>
+                <button class="filter-btn" id="saturation">Saturation</button>
+                <button class="filter-btn" id="inversion">Invert</button>
+                <button class="filter-btn" id="grayscale">Grayscale</button>
+            </div>
+
+            <div class="slider-container">
+                <div class="slider-header">
+                    <span id="filter-name">Brightness</span>
+                    <span id="filter-value">100%</span>
+                </div>
+                <input type="range" id="filter-slider" value="100" min="0" max="200">
+            </div>
+
+            <div class="panel-title" style="margin-top: 40px;">Actions</div>
+            <div class="action-btns">
+                <button class="btn-secondary" id="reset-btn">Reset All Adjustments</button>
+                <button class="btn-secondary btn-export" id="save-btn">Export Image</button>
+            </div>
+        </div>
+
+    </section>
+
+    <script>
+        // UI Navigation
+        const landingPage = document.getElementById('landing-page');
+        const editorWorkspace = document.getElementById('editor-workspace');
+        const startBtn = document.getElementById('start-editing-btn');
+
+        startBtn.addEventListener('click', () => {
+            landingPage.style.display = 'none';
+            editorWorkspace.style.display = 'flex';
+        });
+
+        // Editor Logic
+        const fileInput = document.getElementById('file-input');
+        const uploadBox = document.getElementById('upload-box');
+        const previewImg = document.getElementById('preview-img');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const filterName = document.getElementById('filter-name');
+        const filterValue = document.getElementById('filter-value');
+        const filterSlider = document.getElementById('filter-slider');
+        const resetBtn = document.getElementById('reset-btn');
+        const saveBtn = document.getElementById('save-btn');
+
+        let brightness = "100", saturation = "100", inversion = "0", grayscale = "0";
+
+        // Handle Image Upload
+        uploadBox.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', () => {
+            let file = fileInput.files[0];
+            if(!file) return;
+            previewImg.src = URL.createObjectURL(file);
+            previewImg.onload = () => {
+                uploadBox.style.display = 'none';
+                previewImg.style.display = 'block';
+                resetBtn.click();
+            }
+        });
+
+        const applyFilters = () => {
+            previewImg.style.filter = `brightness(${brightness}%) saturate(${saturation}%) invert(${inversion}%) grayscale(${grayscale}%)`;
+        }
+
+        // Handle Filter Buttons
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelector('.filter-btn.active').classList.remove('active');
+                btn.classList.add('active');
+                filterName.innerText = btn.innerText;
+
+                if(btn.id === "brightness") {
+                    filterSlider.max = "200";
+                    filterSlider.value = brightness;
+                } else if(btn.id === "saturation") {
+                    filterSlider.max = "200";
+                    filterSlider.value = saturation;
+                } else if(btn.id === "inversion") {
+                    filterSlider.max = "100";
+                    filterSlider.value = inversion;
+                } else {
+                    filterSlider.max = "100";
+                    filterSlider.value = grayscale;
+                }
+                filterValue.innerText = `${filterSlider.value}%`;
+            });
+        });
+
+        // Handle Slider
+        filterSlider.addEventListener('input', () => {
+            filterValue.innerText = `${filterSlider.value}%`;
+            const activeFilter = document.querySelector('.filter-btn.active').id;
+
+            if(activeFilter === "brightness") brightness = filterSlider.value;
+            else if(activeFilter === "saturation") saturation = filterSlider.value;
+            else if(activeFilter === "inversion") inversion = filterSlider.value;
+            else grayscale = filterSlider.value;
+
+            applyFilters();
+        });
+
+        // Handle Reset
+        resetBtn.addEventListener('click', () => {
+            brightness = "100"; saturation = "100"; inversion = "0"; grayscale = "0";
+            filterBtns[0].click();
+            applyFilters();
+        });
+
+        // Handle Export
+        saveBtn.addEventListener('click', () => {
+            if(!previewImg.src || previewImg.src === window.location.href) {
+                alert("Please upload an image first!");
+                return; 
+            }
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = previewImg.naturalWidth;
+            canvas.height = previewImg.naturalHeight;
+            ctx.filter = `brightness(${brightness}%) saturate(${saturation}%) invert(${inversion}%) grayscale(${grayscale}%)`;
+            ctx.drawImage(previewImg, 0, 0, canvas.width, canvas.height);
+            const link = document.createElement("a");
+            link.download = "SVSV-Pro-Edit.jpg";
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    </script>
 </body>
 </html>
