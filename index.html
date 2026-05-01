@@ -3,79 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SVSV.AI | Pro Image Editor</title>
-    <!-- This line connects your CSS file -->
-    <link rel="stylesheet" href="styles.css">
+    <title>SVSV.AI | Premium Studio</title>
+    <style>
+        /* --- PREMIUM CSS DESIGN --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; user-select: none; }
+        body { background-color: #09090b; color: #ededed; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* NAVBAR */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background: #111113; border-bottom: 1px solid #27272a; }
+        .logo { font-size: 20px; font-weight: 900; letter-spacing: 2px; color: #ffffff; }
+        .logo span { color: #6366f1; }
+        .nav-actions button { background: #6366f1; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .nav-actions button:hover { background: #4f46e5; }
+
+        /* MAIN WORKSPACE */
+        .workspace { display: flex; flex-grow: 1; height: calc(100vh - 60px); }
+
+        /* LEFT SIDEBAR (TOOLS) */
+        .sidebar { width: 70px; background: #111113; border-right: 1px solid #27272a; display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 15px; }
+        .tool { width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; background: #18181b; border: 1px solid #27272a; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 12px; font-weight: bold; color: #a1a1aa; }
+        .tool:hover, .tool.active { background: #27272a; color: #6366f1; border-color: #6366f1; }
+
+        /* CENTER CANVAS */
+        .canvas-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; background: #000000; position: relative; padding: 40px; }
+        .upload-area { border: 2px dashed #27272a; border-radius: 12px; padding: 60px; text-align: center; cursor: pointer; transition: 0.3s; background: #09090b; }
+        .upload-area:hover { border-color: #6366f1; background: #111113; }
+        .upload-area h3 { margin-bottom: 10px; color: #e4e4e7; }
+        .upload-area p { color: #71717a; font-size: 14px; }
+        #preview-image { max-width: 100%; max-height: 100%; object-fit: contain; display: none; box-shadow: 0 20px 50px rgba(0,0,0,0.8); border-radius: 4px; }
+
+        /* RIGHT PANEL (PROPERTIES) */
+        .properties { width: 320px; background: #111113; border-left: 1px solid #27272a; padding: 25px 20px; overflow-y: auto; }
+        .panel-section { margin-bottom: 30px; }
+        .panel-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #71717a; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #27272a; padding-bottom: 8px; }
+        
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; }
+        .filter-btn { background: #18181b; border: 1px solid #27272a; color: #a1a1aa; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: 0.2s; }
+        .filter-btn:hover { background: #27272a; color: white; }
+        .filter-btn.active { background: rgba(99, 102, 241, 0.1); border-color: #6366f1; color: #6366f1; }
+
+        .slider-wrap { margin-bottom: 20px; }
+        .slider-info { display: flex; justify-content: space-between; font-size: 13px; color: #e4e4e7; margin-bottom: 10px; }
+        input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #6366f1; cursor: pointer; margin-top: -6px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #27272a; border-radius: 2px; }
+
+        .reset-btn { width: 100%; padding: 12px; background: transparent; border: 1px solid #3f3f46; color: #e4e4e7; border-radius: 6px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+        .reset-btn:hover { background: #27272a; }
+    </style>
 </head>
 <body>
 
-    <!-- NAVBAR -->
-    <nav>
-        <div class="logo">SVSV.AI</div>
-        <div class="nav-links">
-            <span>Create</span>
-            <span>Industry</span>
-            <span>Learn</span>
-            <span>Pricing</span>
+    <!-- HEADER -->
+    <header>
+        <div class="logo">SVSV<span>.AI</span></div>
+        <div class="nav-actions">
+            <input type="file" id="file-input" accept="image/*" hidden>
+            <button id="export-btn">Export HD</button>
         </div>
-    </nav>
+    </header>
 
-    <!-- HERO LANDING PAGE -->
-    <section id="landing-page">
-        <h1 class="gradient-text">AI IMAGE EDITOR</h1>
-        <h1>REAL CREATIVE CONTROL</h1>
-        <p class="subtitle">Edit images with precision using SVSV. Refine details, adjust lighting, and enhance quality without starting over. Iterate faster and get professional results.</p>
-        <button class="btn-primary" id="start-editing-btn">Launch Editor Studio</button>
-    </section>
-
-    <!-- PRO EDITOR WORKSPACE -->
-    <section id="editor-workspace">
-        <!-- Toolbar (Left) -->
-        <div class="toolbar">
-            <div class="tool-icon active" title="Move">M</div>
-            <div class="tool-icon" title="Crop">C</div>
-            <div class="tool-icon" title="Brush">B</div>
-            <div class="tool-icon" title="Text">T</div>
+    <!-- MAIN WORKSPACE -->
+    <div class="workspace">
+        
+        <!-- LEFT TOOLBAR -->
+        <div class="sidebar">
+            <div class="tool active" title="Adjust">Adj</div>
+            <div class="tool" title="Crop">Crp</div>
+            <div class="tool" title="Text">Txt</div>
         </div>
 
-        <!-- Canvas (Center) -->
-        <div class="canvas-area">
-            <div class="upload-box" id="upload-box">
-                <h3>Click to Upload Image</h3>
-                <p style="color: #666; margin-top: 10px; font-size: 14px;">Drag & drop or browse</p>
-                <input type="file" id="file-input" accept="image/*" hidden>
+        <!-- CENTER CANVAS -->
+        <div class="canvas-container">
+            <div class="upload-area" id="upload-area">
+                <h3>Upload Workspace Image</h3>
+                <p>Drag and drop or click to browse</p>
             </div>
-            <img src="" id="preview-img" alt="Workspace">
+            <img src="" id="preview-image" alt="Image to edit">
         </div>
 
-        <!-- Properties (Right) -->
-        <div class="properties-panel">
-            <div class="panel-title">Adjustments</div>
-            
-            <div class="filter-group">
-                <button class="filter-btn active" id="brightness">Brightness</button>
-                <button class="filter-btn" id="saturation">Saturation</button>
-                <button class="filter-btn" id="inversion">Invert</button>
-                <button class="filter-btn" id="grayscale">Grayscale</button>
-            </div>
-
-            <div class="slider-container">
-                <div class="slider-header">
-                    <span id="filter-name">Brightness</span>
-                    <span id="filter-value">100%</span>
+        <!-- RIGHT PROPERTIES PANEL -->
+        <div class="properties">
+            <div class="panel-section">
+                <div class="panel-title">AI Adjustments</div>
+                <div class="filter-grid">
+                    <button class="filter-btn active" data-filter="brightness">Brightness</button>
+                    <button class="filter-btn" data-filter="saturation">Saturation</button>
+                    <button class="filter-btn" data-filter="contrast">Contrast</button>
+                    <button class="filter-btn" data-filter="grayscale">Grayscale</button>
                 </div>
-                <input type="range" id="filter-slider" value="100" min="0" max="200">
-            </div>
 
-            <div class="panel-title" style="margin-top: 40px;">Actions</div>
-            <div class="action-btns">
-                <button class="btn-secondary" id="reset-btn">Reset All Adjustments</button>
-                <button class="btn-secondary btn-export" id="save-btn">Export Image</button>
+                <div class="slider-wrap">
+                    <div class="slider-info">
+                        <span id="slider-name">Brightness</span>
+                        <span id="slider-value">100%</span>
+                    </div>
+                    <input type="range" id="main-slider" value="100" min="0" max="200">
+                </div>
+                
+                <button class="reset-btn" id="reset-btn">Reset Modifications</button>
             </div>
         </div>
-    </section>
 
-    <!-- This line connects your JavaScript file -->
-    <script src="script.js"></script>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.getElementById('upload-area');
+        const previewImage = document.getElementById('preview-image');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const mainSlider = document.getElementById('main-slider');
+        const sliderName = document.getElementById('slider-name');
+        const sliderValue = document.getElementById('slider-value');
+        const resetBtn = document.getElementById('reset-btn');
+        const exportBtn = document.getElementById('export-btn');
+
+        // State Management
+        let filters = { brightness: 100, saturation: 100, contrast: 100, grayscale: 0 };
+        let currentFilter = 'brightness';
+
+        // Upload Logic
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            let file = e.target.files[0];
+            if(!file) return;
+            previewImage.src = URL.createObjectURL(file);
+            previewImage.onload = () => {
+                uploadArea.style.display = 'none';
+                previewImage.style.display = 'block';
+                resetBtn.click();
+            }
+        });
+
+        // Apply Filters function
+        const applyFilters = () => {
+            previewImage.style.filter = `brightness(${filters.brightness}%) saturate(${filters.saturation}%) contrast(${filters.contrast}%) grayscale(${filters.grayscale}%)`;
+        }
+
+        // Filter Buttons Selection
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelector('.filter-btn.active').classList.remove('active');
+                btn.classList.add('active');
+                currentFilter = btn.getAttribute('data-filter');
+                sliderName.innerText = btn.innerText;
+                
+                mainSlider.max = currentFilter === 'grayscale' ? "100" : "200";
+                mainSlider.value = filters[currentFilter];
+                sliderValue.innerText = `${filters[currentFilter]}%`;
+            });
+        });
+
+        // Slider Interaction
+        mainSlider.addEventListener('input', (e) => {
+            filters[currentFilter] = e.target.value;
+            sliderValue.innerText = `${e.target.value}%`;
+            applyFilters();
+        });
+
+        // Reset
+        resetBtn.addEventListener('click', () => {
+            filters = { brightness: 100, saturation: 100, contrast: 100, grayscale: 0 };
+            document.querySelector('[data-filter="brightness"]').click();
+            applyFilters();
+        });
+
+        // Export/Save
+        exportBtn.addEventListener('click', () => {
+            if(!previewImage.src || previewImage.src === window.location.href) {
+                alert("Upload an image first."); return; 
+            }
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = previewImage.naturalWidth;
+            canvas.height = previewImage.naturalHeight;
+            ctx.filter = `brightness(${filters.brightness}%) saturate(${filters.saturation}%) contrast(${filters.contrast}%) grayscale(${filters.grayscale}%)`;
+            ctx.drawImage(previewImage, 0, 0, canvas.width, canvas.height);
+            const link = document.createElement("a");
+            link.download = "SVSV-Pro-Export.png";
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        });
+    </script>
 </body>
 </html>
