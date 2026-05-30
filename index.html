@@ -56,10 +56,12 @@
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #6366f1; cursor: pointer; margin-top: -6px; }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #27272a; border-radius: 2px; }
 
-        .reset-btn, .apply-btn, .cancel-btn { width: 100%; padding: 12px; background: transparent; border: 1px solid #3f3f46; color: #e4e4e7; border-radius: 6px; cursor: pointer; font-weight: 500; transition: 0.2s; margin-bottom: 8px; }
+        .reset-btn, .apply-btn, .cancel-btn, .crop-preset-btn { width: 100%; padding: 12px; background: transparent; border: 1px solid #3f3f46; color: #e4e4e7; border-radius: 6px; cursor: pointer; font-weight: 500; transition: 0.2s; margin-bottom: 8px; }
         .reset-btn:hover, .cancel-btn:hover { background: #27272a; }
         .apply-btn { background: #6366f1; border-color: #6366f1; color: white; }
         .apply-btn:hover { background: #4f46e5; }
+        .crop-preset-btn { margin-bottom: 8px; }
+        .crop-preset-btn:hover { background: #27272a; }
 
         /* Text tool inputs */
         .text-input-group { margin-bottom: 15px; }
@@ -129,14 +131,10 @@
             <!-- CROP PANEL -->
             <div class="panel-section hidden" id="crop-panel">
                 <div class="panel-title">Crop Tool</div>
-                <div class="text-input-group">
-                    <label>Crop Presets</label>
-                    <button class="filter-btn" id="crop-25">Crop 25%</button>
-                    <button class="filter-btn" id="crop-33">Crop 33%</button>
-                    <button class="filter-btn" id="crop-50">Crop 50%</button>
-                </div>
-                <button class="apply-btn" id="apply-crop">Apply Crop</button>
-                <button class="cancel-btn" id="cancel-crop">Cancel</button>
+                <button class="crop-preset-btn" onclick="performCrop(0.25)">Crop 25%</button>
+                <button class="crop-preset-btn" onclick="performCrop(0.33)">Crop 33%</button>
+                <button class="crop-preset-btn" onclick="performCrop(0.50)">Crop 50%</button>
+                <button class="cancel-btn" onclick="switchTool('adjust')">Back to Adjust</button>
             </div>
 
             <!-- TEXT PANEL -->
@@ -155,8 +153,8 @@
                     <label>Text Color</label>
                     <input type="color" id="text-color" value="#ffffff">
                 </div>
-                <button class="apply-btn" id="apply-text">Add Text</button>
-                <button class="cancel-btn" id="cancel-text">Cancel</button>
+                <button class="apply-btn" onclick="applyText()">Add Text</button>
+                <button class="cancel-btn" onclick="switchTool('adjust')">Back to Adjust</button>
             </div>
 
         </div>
@@ -168,7 +166,6 @@
         const fileInput = document.getElementById('file-input');
         const uploadArea = document.getElementById('upload-area');
         const previewImage = document.getElementById('preview-image');
-        const filterBtns = document.querySelectorAll('.filter-btn');
         const mainSlider = document.getElementById('main-slider');
         const sliderName = document.getElementById('slider-name');
         const sliderValue = document.getElementById('slider-value');
@@ -184,19 +181,11 @@
         const adjustPanel = document.getElementById('adjust-panel');
         const cropPanel = document.getElementById('crop-panel');
         const textPanel = document.getElementById('text-panel');
-        
-        // Canvas elements
-        const editCanvas = document.getElementById('edit-canvas');
-        const cropOverlay = document.getElementById('crop-overlay');
-        const canvasContainer = document.getElementById('canvas-container');
 
         // State Management
         let filters = { brightness: 100, saturation: 100, contrast: 100, grayscale: 0 };
         let currentFilter = 'brightness';
         let currentTool = 'adjust';
-        let originalImageData = null;
-        let isCropping = false;
-        let cropStartX, cropStartY, cropEndX, cropEndY;
 
         // Upload Logic
         uploadArea.addEventListener('click', () => fileInput.click());
@@ -207,21 +196,9 @@
             previewImage.onload = () => {
                 uploadArea.style.display = 'none';
                 previewImage.style.display = 'block';
-                editCanvas.style.display = 'none';
                 resetBtn.click();
-                storeOriginalImage();
             }
         });
-
-        // Store original image
-        function storeOriginalImage() {
-            const canvas = document.createElement('canvas');
-            canvas.width = previewImage.naturalWidth;
-            canvas.height = previewImage.naturalHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(previewImage, 0, 0);
-            originalImageData = canvas.toDataURL();
-        }
 
         // Apply Filters function
         const applyFilters = () => {
@@ -252,18 +229,17 @@
         toolTxt.addEventListener('click', () => switchTool('text'));
 
         // Filter Buttons Selection
+        const filterBtns = document.querySelectorAll('[data-filter]');
         filterBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                if(btn.classList.contains('filter-btn') && btn.getAttribute('data-filter')) {
-                    document.querySelector('.filter-btn.active[data-filter]').classList.remove('active');
-                    btn.classList.add('active');
-                    currentFilter = btn.getAttribute('data-filter');
-                    sliderName.innerText = btn.innerText;
-                    
-                    mainSlider.max = currentFilter === 'grayscale' ? "100" : "200";
-                    mainSlider.value = filters[currentFilter];
-                    sliderValue.innerText = `${filters[currentFilter]}%`;
-                }
+                document.querySelector('[data-filter].active').classList.remove('active');
+                btn.classList.add('active');
+                currentFilter = btn.getAttribute('data-filter');
+                sliderName.innerText = btn.innerText;
+                
+                mainSlider.max = currentFilter === 'grayscale' ? "100" : "200";
+                mainSlider.value = filters[currentFilter];
+                sliderValue.innerText = `${filters[currentFilter]}%`;
             });
         });
 
@@ -282,14 +258,12 @@
         });
 
         // CROP TOOL
-        document.getElementById('crop-25').addEventListener('click', () => performCrop(0.25));
-        document.getElementById('crop-33').addEventListener('click', () => performCrop(0.33));
-        document.getElementById('crop-50').addEventListener('click', () => performCrop(0.50));
-
         function performCrop(percentage) {
             if(!previewImage.src || previewImage.style.display === 'none') {
-                alert("Please upload an image first."); return;
+                alert("Please upload an image first.");
+                return;
             }
+            
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
             const w = previewImage.naturalWidth;
@@ -301,26 +275,18 @@
             ctx.drawImage(previewImage, w * cropAmount / 2, h * cropAmount / 2, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
             
             previewImage.src = canvas.toDataURL();
-            previewImage.onload = () => storeOriginalImage();
-            alert("Crop applied!");
+            alert("Crop applied successfully! ✂️");
         }
-
-        document.getElementById('cancel-crop').addEventListener('click', () => {
-            switchTool('adjust');
-        });
-
-        document.getElementById('apply-crop').addEventListener('click', () => {
-            alert("Select a crop preset to apply crop");
-        });
 
         // TEXT TOOL
         document.getElementById('text-size').addEventListener('input', (e) => {
             document.getElementById('text-size-value').innerText = e.target.value + 'px';
         });
 
-        document.getElementById('apply-text').addEventListener('click', () => {
+        function applyText() {
             if(!previewImage.src || previewImage.style.display === 'none') {
-                alert("Please upload an image first."); return;
+                alert("Please upload an image first.");
+                return;
             }
             
             const textContent = document.getElementById('text-content').value;
@@ -340,11 +306,12 @@
             // Draw text
             const fontSize = document.getElementById('text-size').value;
             const textColor = document.getElementById('text-color').value;
-            ctx.font = `${fontSize}px Inter, sans-serif`;
+            ctx.font = `bold ${fontSize}px Inter, sans-serif`;
             ctx.fillStyle = textColor;
             ctx.strokeStyle = '#000000';
             ctx.lineWidth = 3;
             ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
             
             const textX = canvas.width / 2;
             const textY = canvas.height / 2;
@@ -352,20 +319,15 @@
             ctx.fillText(textContent, textX, textY);
             
             previewImage.src = canvas.toDataURL();
-            previewImage.onload = () => storeOriginalImage();
-            
             document.getElementById('text-content').value = '';
-            alert("Text added!");
-        });
-
-        document.getElementById('cancel-text').addEventListener('click', () => {
-            switchTool('adjust');
-        });
+            alert("Text added successfully! ✏️");
+        }
 
         // Export/Save
         exportBtn.addEventListener('click', () => {
             if(!previewImage.src || previewImage.src === window.location.href) {
-                alert("Upload an image first."); return; 
+                alert("Upload an image first.");
+                return;
             }
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
