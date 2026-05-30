@@ -23,16 +23,22 @@
 
         /* LEFT SIDEBAR (TOOLS) */
         .sidebar { width: 70px; background: #111113; border-right: 1px solid #27272a; display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 15px; }
-        .tool { width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; background: #18181b; border: 1px solid #27272a; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 12px; font-weight: bold; color: #a1a1aa; }
+        .tool { width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; background: #18181b; border: 1px solid #27272a; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 11px; font-weight: 600; color: #a1a1aa; }
         .tool:hover, .tool.active { background: #27272a; color: #6366f1; border-color: #6366f1; }
 
         /* CENTER CANVAS */
-        .canvas-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; background: #000000; position: relative; padding: 40px; }
+        .canvas-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; background: #000000; position: relative; padding: 40px; overflow: hidden; }
         .upload-area { border: 2px dashed #27272a; border-radius: 12px; padding: 60px; text-align: center; cursor: pointer; transition: 0.3s; background: #09090b; }
         .upload-area:hover { border-color: #6366f1; background: #111113; }
         .upload-area h3 { margin-bottom: 10px; color: #e4e4e7; }
         .upload-area p { color: #71717a; font-size: 14px; }
         #preview-image { max-width: 100%; max-height: 100%; object-fit: contain; display: none; box-shadow: 0 20px 50px rgba(0,0,0,0.8); border-radius: 4px; }
+        
+        /* Canvas for crop/draw operations */
+        #edit-canvas { display: none; max-width: 100%; max-height: 100%; border: 2px solid #6366f1; }
+        
+        /* Crop overlay */
+        .crop-overlay { position: absolute; border: 2px dashed #6366f1; background: rgba(99, 102, 241, 0.1); display: none; cursor: move; }
 
         /* RIGHT PANEL (PROPERTIES) */
         .properties { width: 320px; background: #111113; border-left: 1px solid #27272a; padding: 25px 20px; overflow-y: auto; }
@@ -50,8 +56,18 @@
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #6366f1; cursor: pointer; margin-top: -6px; }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #27272a; border-radius: 2px; }
 
-        .reset-btn { width: 100%; padding: 12px; background: transparent; border: 1px solid #3f3f46; color: #e4e4e7; border-radius: 6px; cursor: pointer; font-weight: 500; transition: 0.2s; }
-        .reset-btn:hover { background: #27272a; }
+        .reset-btn, .apply-btn, .cancel-btn { width: 100%; padding: 12px; background: transparent; border: 1px solid #3f3f46; color: #e4e4e7; border-radius: 6px; cursor: pointer; font-weight: 500; transition: 0.2s; margin-bottom: 8px; }
+        .reset-btn:hover, .cancel-btn:hover { background: #27272a; }
+        .apply-btn { background: #6366f1; border-color: #6366f1; color: white; }
+        .apply-btn:hover { background: #4f46e5; }
+
+        /* Text tool inputs */
+        .text-input-group { margin-bottom: 15px; }
+        .text-input-group label { display: block; font-size: 12px; color: #71717a; margin-bottom: 8px; font-weight: 600; }
+        .text-input-group input, .text-input-group textarea { width: 100%; padding: 8px; background: #18181b; border: 1px solid #27272a; color: #e4e4e7; border-radius: 6px; font-family: 'Inter', sans-serif; }
+        .text-input-group input:focus, .text-input-group textarea:focus { outline: none; border-color: #6366f1; background: #1a1a1e; }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -70,23 +86,27 @@
         
         <!-- LEFT TOOLBAR -->
         <div class="sidebar">
-            <div class="tool active" title="Adjust">Adj</div>
-            <div class="tool" title="Crop">Crp</div>
-            <div class="tool" title="Text">Txt</div>
+            <div class="tool active" id="tool-adj" title="Adjust">Adj</div>
+            <div class="tool" id="tool-crp" title="Crop">Crp</div>
+            <div class="tool" id="tool-txt" title="Text">Txt</div>
         </div>
 
         <!-- CENTER CANVAS -->
-        <div class="canvas-container">
+        <div class="canvas-container" id="canvas-container">
             <div class="upload-area" id="upload-area">
                 <h3>Upload Workspace Image</h3>
                 <p>Drag and drop or click to browse</p>
             </div>
             <img src="" id="preview-image" alt="Image to edit">
+            <canvas id="edit-canvas"></canvas>
+            <div class="crop-overlay" id="crop-overlay"></div>
         </div>
 
         <!-- RIGHT PROPERTIES PANEL -->
         <div class="properties">
-            <div class="panel-section">
+            
+            <!-- ADJUST PANEL -->
+            <div class="panel-section" id="adjust-panel">
                 <div class="panel-title">AI Adjustments</div>
                 <div class="filter-grid">
                     <button class="filter-btn active" data-filter="brightness">Brightness</button>
@@ -105,6 +125,40 @@
                 
                 <button class="reset-btn" id="reset-btn">Reset Modifications</button>
             </div>
+
+            <!-- CROP PANEL -->
+            <div class="panel-section hidden" id="crop-panel">
+                <div class="panel-title">Crop Tool</div>
+                <div class="text-input-group">
+                    <label>Crop Presets</label>
+                    <button class="filter-btn" id="crop-25">Crop 25%</button>
+                    <button class="filter-btn" id="crop-33">Crop 33%</button>
+                    <button class="filter-btn" id="crop-50">Crop 50%</button>
+                </div>
+                <button class="apply-btn" id="apply-crop">Apply Crop</button>
+                <button class="cancel-btn" id="cancel-crop">Cancel</button>
+            </div>
+
+            <!-- TEXT PANEL -->
+            <div class="panel-section hidden" id="text-panel">
+                <div class="panel-title">Text Tool</div>
+                <div class="text-input-group">
+                    <label>Text Content</label>
+                    <textarea id="text-content" placeholder="Enter text..." rows="3"></textarea>
+                </div>
+                <div class="text-input-group">
+                    <label>Font Size</label>
+                    <input type="range" id="text-size" min="10" max="100" value="30">
+                    <span id="text-size-value">30px</span>
+                </div>
+                <div class="text-input-group">
+                    <label>Text Color</label>
+                    <input type="color" id="text-color" value="#ffffff">
+                </div>
+                <button class="apply-btn" id="apply-text">Add Text</button>
+                <button class="cancel-btn" id="cancel-text">Cancel</button>
+            </div>
+
         </div>
 
     </div>
@@ -120,10 +174,29 @@
         const sliderValue = document.getElementById('slider-value');
         const resetBtn = document.getElementById('reset-btn');
         const exportBtn = document.getElementById('export-btn');
+        
+        // Tool elements
+        const toolAdj = document.getElementById('tool-adj');
+        const toolCrp = document.getElementById('tool-crp');
+        const toolTxt = document.getElementById('tool-txt');
+        
+        // Panel elements
+        const adjustPanel = document.getElementById('adjust-panel');
+        const cropPanel = document.getElementById('crop-panel');
+        const textPanel = document.getElementById('text-panel');
+        
+        // Canvas elements
+        const editCanvas = document.getElementById('edit-canvas');
+        const cropOverlay = document.getElementById('crop-overlay');
+        const canvasContainer = document.getElementById('canvas-container');
 
         // State Management
         let filters = { brightness: 100, saturation: 100, contrast: 100, grayscale: 0 };
         let currentFilter = 'brightness';
+        let currentTool = 'adjust';
+        let originalImageData = null;
+        let isCropping = false;
+        let cropStartX, cropStartY, cropEndX, cropEndY;
 
         // Upload Logic
         uploadArea.addEventListener('click', () => fileInput.click());
@@ -134,26 +207,63 @@
             previewImage.onload = () => {
                 uploadArea.style.display = 'none';
                 previewImage.style.display = 'block';
+                editCanvas.style.display = 'none';
                 resetBtn.click();
+                storeOriginalImage();
             }
         });
+
+        // Store original image
+        function storeOriginalImage() {
+            const canvas = document.createElement('canvas');
+            canvas.width = previewImage.naturalWidth;
+            canvas.height = previewImage.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(previewImage, 0, 0);
+            originalImageData = canvas.toDataURL();
+        }
 
         // Apply Filters function
         const applyFilters = () => {
             previewImage.style.filter = `brightness(${filters.brightness}%) saturate(${filters.saturation}%) contrast(${filters.contrast}%) grayscale(${filters.grayscale}%)`;
         }
 
+        // Tool switching
+        function switchTool(tool) {
+            document.querySelectorAll('.tool').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel-section').forEach(p => p.classList.add('hidden'));
+            
+            currentTool = tool;
+            
+            if(tool === 'adjust') {
+                toolAdj.classList.add('active');
+                adjustPanel.classList.remove('hidden');
+            } else if(tool === 'crop') {
+                toolCrp.classList.add('active');
+                cropPanel.classList.remove('hidden');
+            } else if(tool === 'text') {
+                toolTxt.classList.add('active');
+                textPanel.classList.remove('hidden');
+            }
+        }
+
+        toolAdj.addEventListener('click', () => switchTool('adjust'));
+        toolCrp.addEventListener('click', () => switchTool('crop'));
+        toolTxt.addEventListener('click', () => switchTool('text'));
+
         // Filter Buttons Selection
         filterBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelector('.filter-btn.active').classList.remove('active');
-                btn.classList.add('active');
-                currentFilter = btn.getAttribute('data-filter');
-                sliderName.innerText = btn.innerText;
-                
-                mainSlider.max = currentFilter === 'grayscale' ? "100" : "200";
-                mainSlider.value = filters[currentFilter];
-                sliderValue.innerText = `${filters[currentFilter]}%`;
+                if(btn.classList.contains('filter-btn') && btn.getAttribute('data-filter')) {
+                    document.querySelector('.filter-btn.active[data-filter]').classList.remove('active');
+                    btn.classList.add('active');
+                    currentFilter = btn.getAttribute('data-filter');
+                    sliderName.innerText = btn.innerText;
+                    
+                    mainSlider.max = currentFilter === 'grayscale' ? "100" : "200";
+                    mainSlider.value = filters[currentFilter];
+                    sliderValue.innerText = `${filters[currentFilter]}%`;
+                }
             });
         });
 
@@ -169,6 +279,87 @@
             filters = { brightness: 100, saturation: 100, contrast: 100, grayscale: 0 };
             document.querySelector('[data-filter="brightness"]').click();
             applyFilters();
+        });
+
+        // CROP TOOL
+        document.getElementById('crop-25').addEventListener('click', () => performCrop(0.25));
+        document.getElementById('crop-33').addEventListener('click', () => performCrop(0.33));
+        document.getElementById('crop-50').addEventListener('click', () => performCrop(0.50));
+
+        function performCrop(percentage) {
+            if(!previewImage.src || previewImage.style.display === 'none') {
+                alert("Please upload an image first."); return;
+            }
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const w = previewImage.naturalWidth;
+            const h = previewImage.naturalHeight;
+            const cropAmount = percentage;
+            
+            canvas.width = w * (1 - cropAmount);
+            canvas.height = h * (1 - cropAmount);
+            ctx.drawImage(previewImage, w * cropAmount / 2, h * cropAmount / 2, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+            
+            previewImage.src = canvas.toDataURL();
+            previewImage.onload = () => storeOriginalImage();
+            alert("Crop applied!");
+        }
+
+        document.getElementById('cancel-crop').addEventListener('click', () => {
+            switchTool('adjust');
+        });
+
+        document.getElementById('apply-crop').addEventListener('click', () => {
+            alert("Select a crop preset to apply crop");
+        });
+
+        // TEXT TOOL
+        document.getElementById('text-size').addEventListener('input', (e) => {
+            document.getElementById('text-size-value').innerText = e.target.value + 'px';
+        });
+
+        document.getElementById('apply-text').addEventListener('click', () => {
+            if(!previewImage.src || previewImage.style.display === 'none') {
+                alert("Please upload an image first."); return;
+            }
+            
+            const textContent = document.getElementById('text-content').value;
+            if(!textContent) {
+                alert("Please enter text.");
+                return;
+            }
+            
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = previewImage.naturalWidth;
+            canvas.height = previewImage.naturalHeight;
+            
+            // Draw original image
+            ctx.drawImage(previewImage, 0, 0);
+            
+            // Draw text
+            const fontSize = document.getElementById('text-size').value;
+            const textColor = document.getElementById('text-color').value;
+            ctx.font = `${fontSize}px Inter, sans-serif`;
+            ctx.fillStyle = textColor;
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.textAlign = 'center';
+            
+            const textX = canvas.width / 2;
+            const textY = canvas.height / 2;
+            ctx.strokeText(textContent, textX, textY);
+            ctx.fillText(textContent, textX, textY);
+            
+            previewImage.src = canvas.toDataURL();
+            previewImage.onload = () => storeOriginalImage();
+            
+            document.getElementById('text-content').value = '';
+            alert("Text added!");
+        });
+
+        document.getElementById('cancel-text').addEventListener('click', () => {
+            switchTool('adjust');
         });
 
         // Export/Save
